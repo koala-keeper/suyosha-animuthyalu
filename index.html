@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suyosha Animuthyalu 🐨</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐨</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#f3efe9; --card:#fff; --ink:#3d3a4b; --koala:#9aa3ad; --pink:#ffb7c5; --leaf:#7cc29a; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Baloo 2',system-ui,sans-serif; color:var(--ink);
+    background: radial-gradient(circle at 10% 10%, #e8f5ec 0, transparent 40%), radial-gradient(circle at 90% 20%, #ffe9ef 0, transparent 40%), var(--bg); min-height:100vh; }
+  header { text-align:center; padding:48px 16px 16px; }
+  .koala { font-size:84px; display:inline-block; animation:bob 2.5s ease-in-out infinite; cursor:pointer; user-select:none; }
+  @keyframes bob { 0%,100%{transform:translateY(0) rotate(-4deg)} 50%{transform:translateY(-10px) rotate(4deg)} }
+  h1 { font-size:clamp(34px,7vw,60px); margin:4px 0 0; font-weight:800; letter-spacing:.5px; }
+  h1 span { color:#e88aa0; }
+  .sub { font-family:'Patrick Hand',cursive; font-size:22px; opacity:.8; margin:6px 0 20px; }
+  .bar { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; padding:0 16px; }
+  button, .btn { font-family:inherit; font-size:17px; font-weight:700; border:none; border-radius:999px; padding:12px 22px; cursor:pointer; text-decoration:none; transition:transform .15s; }
+  button:hover, .btn:hover { transform:scale(1.05); }
+  .primary { background:var(--ink); color:#fff; }
+  .soft { background:#fff; color:var(--ink); box-shadow:0 3px 0 #0001; }
+  input[type=search] { font-family:inherit; font-size:17px; padding:12px 18px; border-radius:999px; border:2px solid #0001; min-width:220px; outline:none; }
+  .count { text-align:center; margin:16px 0 0; font-family:'Patrick Hand',cursive; font-size:20px; }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 60px; columns:280px; column-gap:18px; }
+  .card { break-inside:avoid; background:var(--card); border-radius:22px; padding:20px 20px 16px; margin:0 0 18px; box-shadow:0 6px 0 #0000000d, 0 10px 30px #0000000a; position:relative; transition:transform .2s; }
+  .card:hover { transform:translateY(-4px) rotate(-.6deg); }
+  .card .word { font-size:28px; font-weight:800; line-height:1.15; }
+  .card .meaning { font-family:'Patrick Hand',cursive; font-size:20px; margin-top:8px; opacity:.85; }
+  .card .when { font-size:14px; margin-top:10px; background:#f6f3ff; border-radius:12px; padding:6px 10px; display:inline-block; }
+  .card .meta { display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:14px; opacity:.7; }
+  .heart { background:none; padding:4px 8px; font-size:18px; box-shadow:none; }
+  .card:nth-child(4n+1){ border-top:8px solid var(--pink);} .card:nth-child(4n+2){ border-top:8px solid var(--leaf);} .card:nth-child(4n+3){ border-top:8px solid #ffd27f;} .card:nth-child(4n){ border-top:8px solid #a9c7ff;}
+  .new { position:absolute; top:-10px; right:14px; background:#e88aa0; color:#fff; font-size:12px; padding:2px 10px; border-radius:999px; }
+  dialog { border:none; border-radius:24px; padding:26px; max-width:420px; width:92%; font-family:inherit; color:var(--ink); }
+  dialog::backdrop { background:#3d3a4b88; }
+  dialog .big { font-size:40px; font-weight:800; margin:10px 0; }
+  dialog input, dialog textarea { width:100%; font-family:inherit; font-size:16px; padding:10px 14px; border-radius:14px; border:2px solid #0002; margin:6px 0 12px; }
+  footer { text-align:center; padding:20px; font-family:'Patrick Hand',cursive; font-size:18px; opacity:.7; }
+  .falling { position:fixed; top:-60px; font-size:34px; pointer-events:none; animation:fall linear forwards; z-index:9; }
+  @keyframes fall { to { transform:translateY(110vh) rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <div class="koala" id="koala" title="tap me">🐨</div>
+  <h1>Suyosha <span>Animuthyalu</span></h1>
+  <p class="sub">The official dictionary of everything Suyosha says 🌿</p>
+  <div class="bar">
+    <button class="primary" id="randomBtn">🎲 Random saying</button>
+    <button class="soft" id="addBtn">➕ Add a saying</button>
+    <input type="search" id="q" placeholder="Search her words…">
+  </div>
+  <p class="count" id="count"></p>
+</header>
+
+<main id="list"></main>
+
+<dialog id="randomDlg">
+  <div style="font-size:48px;text-align:center">🐨</div>
+  <div class="big" id="rWord"></div>
+  <div class="meaning" id="rMeaning" style="font-family:'Patrick Hand',cursive;font-size:22px"></div>
+  <p style="text-align:right"><button class="soft" id="again">Another 🎲</button> <button class="primary" onclick="randomDlg.close()">Close</button></p>
+</dialog>
+
+<dialog id="addDlg">
+  <h2 style="margin-top:0">Add a new animutyam 🐨</h2>
+  <label>What she says</label>
+  <input id="aWord" placeholder="e.g. parledhu">
+  <label>What it means</label>
+  <input id="aMeaning" placeholder="e.g. it's okay, no problem">
+  <label>When she says it (optional)</label>
+  <textarea id="aWhen" rows="2" placeholder="e.g. when plans get cancelled"></textarea>
+  <label>Added by</label>
+  <input id="aBy" placeholder="your name">
+  <p style="font-size:14px;opacity:.7;margin-top:0">This opens GitHub with your saying filled in. Just press <b>Create</b> there and it shows up here for everyone.</p>
+  <p style="text-align:right"><button class="soft" onclick="addDlg.close()">Cancel</button> <button class="primary" id="submitAdd">Add it ✨</button></p>
+</dialog>
+
+<footer>Made with 💗 and lots of 🐨 for Suyosha</footer>
+
+<script>
+const REPO = 'ramsai11122233/suyosha-animuthyalu';
+let sayings = [];
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function parseIssue(issue){
+  const body = issue.body || '';
+  const get = label => { const m = body.match(new RegExp('\\*\\*' + label + ':\\*\\*\\s*([^\\n]*)', 'i')); return m ? m[1].trim() : ''; };
+  return { word: issue.title.replace(/^🐨\s*/, ''), meaning: get('Meaning'), when: get('When'), by: get('Added by') || issue.user.login, isNew: true, likes: 0 };
+}
+
+async function load(){
+  const base = await fetch('sayings.json').then(r => r.json()).catch(() => []);
+  let extra = [];
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/issues?state=open&per_page=100`);
+    if (r.ok) extra = (await r.json()).filter(i => !i.pull_request && (i.title.startsWith('🐨') || (i.labels||[]).some(l => l.name === 'saying'))).map(parseIssue);
+  } catch(e) {}
+  sayings = [...extra, ...base];
+  render();
+}
+
+function likes(){ return JSON.parse(localStorage.getItem('koalaLikes') || '{}'); }
+
+function render(){
+  const q = document.getElementById('q').value.toLowerCase();
+  const L = likes();
+  const shown = sayings.filter(s => (s.word + ' ' + s.meaning + ' ' + (s.when||'')).toLowerCase().includes(q));
+  document.getElementById('count').textContent = `${sayings.length} animuthyalu collected so far 🐨`;
+  document.getElementById('list').innerHTML = shown.map(s => `
+    <div class="card">
+      ${s.isNew ? '<span class="new">new</span>' : ''}
+      <div class="word">“${esc(s.word)}”</div>
+      ${s.meaning ? `<div class="meaning">${esc(s.meaning)}</div>` : ''}
+      ${s.when ? `<div class="when">🗓️ ${esc(s.when)}</div>` : ''}
+      <div class="meta"><span>added by ${esc(s.by || 'a friend')}</span>
+        <button class="heart" data-w="${esc(s.word)}">${L[s.word] ? '💖' : '🤍'}</button></div>
+    </div>`).join('') || '<p style="text-align:center">No sayings match. Add it! 🐨</p>';
+}
+
+document.getElementById('list').addEventListener('click', e => {
+  const b = e.target.closest('.heart'); if (!b) return;
+  const L = likes(); const w = b.dataset.w; L[w] = !L[w];
+  localStorage.setItem('koalaLikes', JSON.stringify(L)); render();
+  if (L[w]) rain(8);
+});
+document.getElementById('q').addEventListener('input', render);
+
+function showRandom(){
+  if (!sayings.length) return;
+  const s = sayings[Math.floor(Math.random()*sayings.length)];
+  rWord.textContent = '“' + s.word + '”'; rMeaning.textContent = s.meaning || '';
+  if (!randomDlg.open) randomDlg.showModal();
+}
+randomBtn.onclick = showRandom; again.onclick = showRandom;
+addBtn.onclick = () => addDlg.showModal();
+
+submitAdd.onclick = () => {
+  const w = aWord.value.trim(); if (!w) { aWord.focus(); return; }
+  const body = `**Meaning:** ${aMeaning.value.trim()}\n**When:** ${aWhen.value.trim()}\n**Added by:** ${aBy.value.trim()}\n\n🐨`;
+  const url = `https://github.com/${REPO}/issues/new?labels=saying&title=${encodeURIComponent('🐨 ' + w)}&body=${encodeURIComponent(body)}`;
+  window.open(url, '_blank'); addDlg.close();
+};
+
+function rain(n){
+  for (let i=0;i<n;i++){
+    const k = document.createElement('div'); k.className='falling';
+    k.textContent = ['🐨','🌿','💗'][i%3];
+    k.style.left = Math.random()*100 + 'vw';
+    k.style.animationDuration = (2 + Math.random()*2) + 's';
+    document.body.appendChild(k); setTimeout(() => k.remove(), 4500);
+  }
+}
+koala.onclick = () => rain(20);
+
+load();
+</script>
+</body>
+</html>
