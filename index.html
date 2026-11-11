@@ -94,7 +94,7 @@ function parseIssue(issue){
 }
 
 async function load(){
-  const base = await fetch('sayings.json').then(r => r.json()).catch(() => []);
+  const base = await fetch('sayings.json?v=' + Date.now(), { cache: 'no-store' }).then(r => r.json()).catch(() => []);
   let extra = [];
   try {
     const r = await fetch(`https://api.github.com/repos/${REPO}/issues?state=open&per_page=100`);
