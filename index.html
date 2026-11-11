@@ -41,6 +41,15 @@
   footer { text-align:center; padding:20px; font-family:'Patrick Hand',cursive; font-size:18px; opacity:.7; }
   .falling { position:fixed; top:-60px; font-size:34px; pointer-events:none; animation:fall linear forwards; z-index:9; }
   @keyframes fall { to { transform:translateY(110vh) rotate(360deg); } }
+  .bday { max-width:640px; margin:22px auto 0; background:#fff; border-radius:24px; padding:16px 18px; box-shadow:0 6px 0 #0000000d; text-align:center; }
+  .bday .t { font-family:'Patrick Hand',cursive; font-size:21px; margin-bottom:10px; }
+  .units { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .u { background:#fff4f6; border-radius:16px; padding:8px 12px; min-width:66px; }
+  .u b { display:block; font-size:28px; line-height:1; color:#e88aa0; }
+  .u span { font-size:13px; opacity:.75; }
+  .party { background:linear-gradient(120deg,#ffe0e8,#fff3c4,#dff5e6); animation:glow 2s ease-in-out infinite; }
+  .party .t { font-family:'Baloo 2'; font-weight:800; font-size:clamp(24px,5vw,36px); margin:0; }
+  @keyframes glow { 50% { transform:scale(1.03); } }
 </style>
 </head>
 <body>
@@ -53,6 +62,7 @@
     <button class="soft" id="addBtn">➕ Add a saying</button>
     <input type="search" id="q" placeholder="Search her words…">
   </div>
+  <div class="bday" id="bday"></div>
   <p class="count" id="count"></p>
 </header>
 
@@ -169,6 +179,36 @@ function rain(n){
   }
 }
 koala.onclick = () => rain(20);
+
+// Birthday countdown (11 July, India time). Never shows age or year.
+const IST = 5.5 * 3600e3;
+function istNow(){ return new Date(Date.now() + IST); }
+function isBirthday(){ const d = istNow(); return d.getUTCMonth() === 6 && d.getUTCDate() === 11; }
+let partyStarted = false;
+function tickBday(){
+  const el = document.getElementById('bday'), now = istNow();
+  if (isBirthday()) {
+    el.className = 'bday party';
+    el.innerHTML = '<p class="t">🎂 Happy Birthday Suyosha! 🐨🎉</p><div class="t" style="font-size:20px;font-family:Patrick Hand">Koalas everywhere are celebrating you today 💗</div>';
+    if (!partyStarted) { partyStarted = true; rain(40); setInterval(() => rain(6), 3000); document.title = '🎂 Happy Birthday Suyosha! 🐨'; }
+    return;
+  }
+  let y = now.getUTCFullYear(); let target = new Date(Date.UTC(y, 6, 11));
+  if (now >= target) target = new Date(Date.UTC(y + 1, 6, 11));
+  let months = 0, cur = new Date(now);
+  while (true) { const n = new Date(cur); n.setUTCMonth(n.getUTCMonth() + 1); if (n > target) break; cur = n; months++; }
+  let ms = target - cur;
+  const weeks = Math.floor(ms / 6048e5); ms -= weeks * 6048e5;
+  const days = Math.floor(ms / 864e5); ms -= days * 864e5;
+  const hours = Math.floor(ms / 36e5); ms -= hours * 36e5;
+  const mins = Math.floor(ms / 6e4); const secs = Math.floor((ms - mins * 6e4) / 1000);
+  const u = (n, l) => `<div class="u"><b>${n}</b><span>${l}</span></div>`;
+  el.className = 'bday';
+  el.innerHTML = '<div class="t">🎂 Countdown to Suyosha\'s birthday, 11 July 🐨</div><div class="units">' +
+    u(months, months === 1 ? 'month' : 'months') + u(weeks, weeks === 1 ? 'week' : 'weeks') + u(days, days === 1 ? 'day' : 'days') +
+    u(hours, hours === 1 ? 'hour' : 'hours') + u(mins, mins === 1 ? 'min' : 'mins') + u(secs, 'secs') + '</div>';
+}
+tickBday(); setInterval(tickBday, 1000);
 
 load();
 </script>
