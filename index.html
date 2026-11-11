@@ -64,7 +64,7 @@
   .hk.gone { transform:scale(2) rotate(180deg); opacity:0; animation:none; }
   @keyframes peek { 0%,100%{ transform:rotate(var(--r)) translateY(0);} 50%{ transform:rotate(var(--r)) translateY(-5px);} }
   .midkoala .k.ready { filter:drop-shadow(0 0 18px #ffb7c5); animation-duration:1.2s; }
-  body { position:relative; }
+  body { position:relative; padding-bottom:70px; }
   @media (max-width: 600px) {
     header { padding:28px 12px 8px; }
     .koala { font-size:64px; }
@@ -83,6 +83,22 @@
     dialog { padding:20px; }
     dialog .big { font-size:32px; }
   }
+  .quest { max-width:440px; margin:10px auto 0; background:#fff; border:3px dashed #ffb7c5; border-radius:22px; padding:14px 16px; }
+  .quest .qt { font-size:24px; font-weight:800; }
+  .quest .qd { font-size:17px; margin:4px 0 10px; line-height:1.35; }
+  .pbar { height:14px; background:#fff0f3; border-radius:999px; overflow:hidden; }
+  .pbar div { height:100%; width:0; background:linear-gradient(90deg,#ffb7c5,#e88aa0); border-radius:999px; transition:width .3s; }
+  .midkoala .hint { opacity:.85 !important; font-size:18px !important; margin-top:6px; font-weight:700; }
+  .quest.done { border:3px solid #7cc29a; background:#effaf3; animation:glow 1.4s ease-in-out infinite; }
+  .tapme { display:none; position:relative; margin:0 auto -6px; width:max-content; background:#e88aa0; color:#fff; font-weight:800; font-size:24px; padding:8px 20px; border-radius:999px; box-shadow:0 5px 0 #c9677e; animation:jump .7s ease-in-out infinite; cursor:pointer; }
+  .tapme::after { content:''; position:absolute; left:50%; bottom:-10px; margin-left:-10px; border:10px solid transparent; border-bottom:0; border-top-color:#e88aa0; }
+  .tapme.show { display:block; }
+  @keyframes jump { 50% { transform:translateY(-10px) scale(1.06); } }
+  .shake { animation:shake .4s !important; }
+  @keyframes shake { 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+  .pill { position:fixed; left:50%; bottom:16px; transform:translateX(-50%); background:var(--ink); color:#fff; font-weight:800; font-size:17px; padding:10px 20px; border-radius:999px; z-index:20; box-shadow:0 6px 20px #0003; cursor:pointer; white-space:nowrap; }
+  .pill.done { background:#e88aa0; animation:jump .7s ease-in-out infinite; }
+  .hk { filter:drop-shadow(0 0 6px #ffb7c5); }
 </style>
 </head>
 <body>
@@ -96,7 +112,16 @@
     <input type="search" id="q" placeholder="Search her words…">
   </div>
   <div class="bday" id="bday"></div>
-  <div class="midkoala"><div class="k" id="midK">🐨</div><div class="hint" id="midHint">find the 27 hidden koalas 👀 0/27</div></div>
+  <div class="midkoala">
+    <div class="tapme" id="tapMe">👆 TAP ME!</div>
+    <div class="k" id="midK">🐨</div>
+    <div class="quest" id="quest">
+      <div class="qt" id="qTitle">🔎 Koala hunt!</div>
+      <div class="qd" id="qDesc">Find the <b>27 tiny koalas 🐨</b> hidden all over this page and tap each one. Find them all to unlock a secret!</div>
+      <div class="pbar"><div id="pFill"></div></div>
+      <div class="hint" id="midHint">0 / 27 found</div>
+    </div>
+  </div>
   <p class="count" id="count"></p>
 </header>
 
@@ -131,6 +156,7 @@
   <p style="text-align:right"><button class="soft" onclick="addDlg.close()">Cancel</button> <button class="primary" id="submitAdd">Add it ✨</button></p>
 </dialog>
 
+<div class="pill" id="pill">🐨 0 / 27 found</div>
 <footer>Certified Suyosha-isms, koala approved 🐨✅</footer>
 
 <script>
@@ -254,12 +280,26 @@ tickBday(); setInterval(tickBday, 1000);
 
 // Secret: find 27 hidden koalas, then tap the middle koala
 const TOTAL = 27; let found = 0, allFound = false;
-const progress = () => midHint.textContent = allFound ? 'You found them all! Tap me 🎉' : `find the ${TOTAL} hidden koalas 👀 ${found}/${TOTAL}`;
+function progress(){
+  pFill.style.width = (found / TOTAL * 100) + '%';
+  if (allFound) {
+    qTitle.textContent = '🎉 You found all 27 koalas!';
+    qDesc.innerHTML = 'Now tap the <b>big koala above ⬆️</b> to see the secret!';
+    midHint.textContent = '27 / 27 found ✅';
+    quest.classList.add('done'); tapMe.classList.add('show');
+    pill.textContent = '🎉 All found! Tap the big koala ⬆️'; pill.classList.add('done');
+  } else {
+    midHint.textContent = `${found} / ${TOTAL} found` + (found ? ' 🐨' : '');
+    pill.textContent = `🐨 ${found} / ${TOTAL} found` + (found ? '' : ' · tap the tiny koalas');
+  }
+}
+pill.onclick = () => midK.scrollIntoView({ behavior:'smooth', block:'center' });
+tapMe.onclick = () => midK.click();
 function hideKoalas(){
   const W = document.documentElement.clientWidth, sz = W < 600 ? 24 : 28;
   const foot = document.querySelector('footer').getBoundingClientRect();
   const H = foot.bottom + scrollY;
-  const avoid = [...document.querySelectorAll('button, input, h1, .sub, .bday .t, .u, #midK, #midHint, .count, .card .word, .card .meta, .card .meaning, .card .when, .new, footer, .koala')]
+  const avoid = [...document.querySelectorAll('button, input, h1, .sub, .bday .t, .u, #midK, #midHint, .quest, .tapme, .count, .card .word, .card .meta, .card .meaning, .card .when, .new, footer, .koala')]
     .map(e => { const r = e.getBoundingClientRect(); return { l: r.left - 4, t: r.top + scrollY - 4, r: r.right + 4, b: r.bottom + scrollY + 4 }; });
   const placed = [];
   const hit = (x, y) => avoid.some(q => x < q.r && x + sz > q.l && y < q.b && y + sz > q.t) || placed.some(p => Math.abs(p.x - x) < sz && Math.abs(p.y - y) < sz);
@@ -272,14 +312,14 @@ function hideKoalas(){
     k.style.animationDelay = (Math.random() * 2) + 's';
     k.style.setProperty('--r', (Math.random() * 40 - 20) + 'deg');
     k.onclick = e => { e.stopPropagation(); if (k.classList.contains('gone')) return; k.classList.add('gone'); setTimeout(() => k.remove(), 400);
-      found++; if (found >= TOTAL) { allFound = true; midK.classList.add('ready'); rain(20); } progress(); };
+      found++; if (found >= TOTAL) { allFound = true; midK.classList.add('ready'); rain(20); setTimeout(() => midK.scrollIntoView({ behavior:'smooth', block:'center' }), 500); } progress(); };
     document.body.appendChild(k);
   }
   progress();
 }
 midK.onclick = () => {
   midK.classList.remove('pop'); void midK.offsetWidth; midK.classList.add('pop'); setTimeout(() => midK.classList.remove('pop'), 500);
-  if (!allFound) { progress(); return; }
+  if (!allFound) { quest.classList.remove('shake'); void quest.offsetWidth; quest.classList.add('shake'); midHint.textContent = `Find all ${TOTAL} tiny koalas first 👀 (${found}/${TOTAL})`; setTimeout(progress, 1800); return; }
   const now = istNow(); let y = now.getUTCFullYear() - 1999, m = now.getUTCMonth() - 6, d = now.getUTCDate() - 11;
   if (d < 0) { m--; d += new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0)).getUTCDate(); }
   if (m < 0) { y--; m += 12; }
