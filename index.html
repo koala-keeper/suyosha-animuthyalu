@@ -65,6 +65,24 @@
   @keyframes peek { 0%,100%{ transform:rotate(var(--r)) translateY(0);} 50%{ transform:rotate(var(--r)) translateY(-5px);} }
   .midkoala .k.ready { filter:drop-shadow(0 0 18px #ffb7c5); animation-duration:1.2s; }
   body { position:relative; }
+  @media (max-width: 600px) {
+    header { padding:28px 12px 8px; }
+    .koala { font-size:64px; }
+    .sub { font-size:19px; margin-bottom:16px; }
+    .bar { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 4px; }
+    .bar button { padding:12px 10px; font-size:16px; }
+    .bar input[type=search] { grid-column:1 / -1; min-width:0; width:100%; }
+    .bday { margin:18px 4px 0; padding:14px 10px; border-radius:20px; }
+    .bday .t { font-size:18px; }
+    .units { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+    .u { min-width:0; padding:8px 4px; }
+    .u b { font-size:24px; }
+    .midkoala .k { font-size:90px; }
+    main { padding:18px 12px 40px; columns:auto; }
+    .card .word { font-size:24px; }
+    dialog { padding:20px; }
+    dialog .big { font-size:32px; }
+  }
 </style>
 </head>
 <body>
@@ -238,11 +256,19 @@ tickBday(); setInterval(tickBday, 1000);
 const TOTAL = 27; let found = 0, allFound = false;
 const progress = () => midHint.textContent = allFound ? 'You found them all! Tap me 🎉' : `find the ${TOTAL} hidden koalas 👀 ${found}/${TOTAL}`;
 function hideKoalas(){
-  const H = Math.max(document.body.scrollHeight, innerHeight), W = document.documentElement.clientWidth;
+  const W = document.documentElement.clientWidth, sz = W < 600 ? 24 : 28;
+  const foot = document.querySelector('footer').getBoundingClientRect();
+  const H = foot.bottom + scrollY;
+  const avoid = [...document.querySelectorAll('button, input, h1, .sub, .bday .t, .u, #midK, #midHint, .count, .card .word, .card .meta, .card .meaning, .card .when, .new, footer, .koala')]
+    .map(e => { const r = e.getBoundingClientRect(); return { l: r.left - 4, t: r.top + scrollY - 4, r: r.right + 4, b: r.bottom + scrollY + 4 }; });
+  const placed = [];
+  const hit = (x, y) => avoid.some(q => x < q.r && x + sz > q.l && y < q.b && y + sz > q.t) || placed.some(p => Math.abs(p.x - x) < sz && Math.abs(p.y - y) < sz);
   for (let i = 0; i < TOTAL; i++) {
+    let x, y, tries = 0;
+    do { x = 4 + Math.random() * (W - sz - 8); y = 20 + Math.random() * (H - sz - 30); tries++; } while (hit(x, y) && tries < 300);
+    placed.push({ x, y });
     const k = document.createElement('div'); k.className = 'hk'; k.textContent = '🐨';
-    k.style.left = (10 + Math.random() * (W - 50)) + 'px';
-    k.style.top = (60 + (i / TOTAL) * (H - 140) + Math.random() * 40) + 'px';
+    k.style.left = x + 'px'; k.style.top = y + 'px'; k.style.fontSize = sz + 'px';
     k.style.animationDelay = (Math.random() * 2) + 's';
     k.style.setProperty('--r', (Math.random() * 40 - 20) + 'deg');
     k.onclick = e => { e.stopPropagation(); if (k.classList.contains('gone')) return; k.classList.add('gone'); setTimeout(() => k.remove(), 400);
