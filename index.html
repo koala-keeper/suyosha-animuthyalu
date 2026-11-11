@@ -75,7 +75,7 @@
   <textarea id="aWhen" rows="2" placeholder="e.g. when plans get cancelled"></textarea>
   <label>Added by</label>
   <input id="aBy" placeholder="your name">
-  <p style="font-size:14px;opacity:.7;margin-top:0">This opens GitHub with your saying filled in. On that page, press the green <b>Create</b> button at the bottom. Your saying shows up here for everyone a few seconds later.</p>
+  <p id="addMsg" style="font-size:14px;opacity:.7;margin-top:0">Tap Add and it shows up for everyone right away 🐨</p>
   <p style="text-align:right"><button class="soft" onclick="addDlg.close()">Cancel</button> <button class="primary" id="submitAdd">Add it ✨</button></p>
 </dialog>
 
@@ -93,14 +93,19 @@ function parseIssue(issue){
   return { word: issue.title.replace(/^🐨\s*/, ''), meaning: get('Meaning'), when: get('When'), by: get('Added by') || issue.user.login, isNew: true, likes: 0 };
 }
 
+const SB_URL = 'https://ozlxgszeizvsfeoqlbqk.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96bHhnc3plaXp2c2Zlb3FsYnFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ0MTc3NDEsImV4cCI6MjEwOTk5Mzc0MX0.UO_d9D_iEc0bkmNY0m9zNvZ1MJPRBQwOtg8AX_MMsHk';
+const SB_H = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+
 async function load(){
-  const base = await fetch('sayings.json?v=' + Date.now(), { cache: 'no-store' }).then(r => r.json()).catch(() => []);
-  let extra = [];
   try {
-    const r = await fetch(`https://api.github.com/repos/${REPO}/issues?state=open&per_page=100`);
-    if (r.ok) extra = (await r.json()).filter(i => !i.pull_request && (i.title.startsWith('🐨') || (i.labels||[]).some(l => l.name === 'saying'))).map(parseIssue);
-  } catch(e) {}
-  sayings = [...extra, ...base];
+    const r = await fetch(SB_URL + '/rest/v1/sayings?select=*&order=created_at.desc,id.desc', { headers: SB_H, cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    const rows = await r.json();
+    sayings = rows.map(x => ({ word: x.word, meaning: x.meaning || '', when: x.when || '', by: x.added_by || '', isNew: Date.now() - new Date(x.created_at) < 3*864e5 && x.id > 4 }));
+  } catch(e) {
+    sayings = await fetch('sayings.json?v=' + Date.now(), { cache: 'no-store' }).then(r => r.json()).catch(() => []);
+  }
   render();
 }
 
@@ -138,13 +143,20 @@ function showRandom(){
   if (!randomDlg.open) randomDlg.showModal();
 }
 randomBtn.onclick = showRandom; again.onclick = showRandom;
-addBtn.onclick = () => addDlg.showModal();
+addBtn.onclick = () => { addMsg.textContent = 'Tap Add and it shows up for everyone right away 🐨'; addDlg.showModal(); };
 
-submitAdd.onclick = () => {
+submitAdd.onclick = async () => {
   const w = aWord.value.trim(); if (!w) { aWord.focus(); return; }
-  const body = `**Meaning:** ${aMeaning.value.trim()}\n**When:** ${aWhen.value.trim()}\n**Added by:** ${aBy.value.trim()}\n\n🐨`;
-  const url = `https://github.com/${REPO}/issues/new?labels=saying&title=${encodeURIComponent('🐨 ' + w)}&body=${encodeURIComponent(body)}`;
-  window.open(url, '_blank'); addDlg.close();
+  submitAdd.disabled = true; submitAdd.textContent = 'Adding… 🐨';
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/sayings', { method: 'POST', headers: { ...SB_H, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ word: w.slice(0,200), meaning: aMeaning.value.trim().slice(0,500), when: aWhen.value.trim().slice(0,300), added_by: aBy.value.trim().slice(0,60) }) });
+    if (!r.ok) throw new Error(r.status);
+    aWord.value = aMeaning.value = aWhen.value = '';
+    addDlg.close(); await load(); rain(25);
+  } catch(e) {
+    addMsg.textContent = "Oops, that didn't save. Check your internet and try again 🐨";
+  } finally { submitAdd.disabled = false; submitAdd.textContent = 'Add it ✨'; }
 };
 
 function rain(n){
