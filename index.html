@@ -75,7 +75,7 @@
   <textarea id="aWhen" rows="2" placeholder="e.g. when plans get cancelled"></textarea>
   <label>Added by</label>
   <input id="aBy" placeholder="your name">
-  <p style="font-size:14px;opacity:.7;margin-top:0">This opens GitHub with your saying filled in. Just press <b>Create</b> there and it shows up here for everyone.</p>
+  <p style="font-size:14px;opacity:.7;margin-top:0">This opens GitHub with your saying filled in. On that page, press the green <b>Create</b> button at the bottom. Your saying shows up here for everyone a few seconds later.</p>
   <p style="text-align:right"><button class="soft" onclick="addDlg.close()">Cancel</button> <button class="primary" id="submitAdd">Add it ✨</button></p>
 </dialog>
 
@@ -132,7 +132,8 @@ document.getElementById('q').addEventListener('input', render);
 
 function showRandom(){
   if (!sayings.length) return;
-  const s = sayings[Math.floor(Math.random()*sayings.length)];
+  let i; do { i = Math.floor(Math.random()*sayings.length); } while (sayings.length > 1 && i === window._lastPick);
+  window._lastPick = i; const s = sayings[i];
   rWord.textContent = '“' + s.word + '”'; rMeaning.textContent = s.meaning || '';
   if (!randomDlg.open) randomDlg.showModal();
 }
