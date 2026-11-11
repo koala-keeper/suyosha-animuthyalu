@@ -50,6 +50,16 @@
   .party { background:linear-gradient(120deg,#ffe0e8,#fff3c4,#dff5e6); animation:glow 2s ease-in-out infinite; }
   .party .t { font-family:'Baloo 2'; font-weight:800; font-size:clamp(24px,5vw,36px); margin:0; }
   @keyframes glow { 50% { transform:scale(1.03); } }
+  .midkoala { text-align:center; margin:26px 0 0; }
+  .midkoala .k { font-size:110px; display:inline-block; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent; animation:dance 2.4s ease-in-out infinite; transition:transform .1s; position:relative; }
+  .midkoala .k.pop { animation:spin .5s ease-out; }
+  .midkoala { position:relative; }
+  .note { position:absolute; font-size:24px; pointer-events:none; animation:float 1.6s ease-out forwards; }
+  @keyframes dance { 0%{transform:translateY(0) rotate(0)} 12%{transform:translateY(-18px) rotate(-14deg)} 25%{transform:translateY(0) rotate(0) scaleX(1.08)} 37%{transform:translateY(-18px) rotate(14deg)} 50%{transform:translateY(0) rotate(0) scaleY(.92)} 62%{transform:translateX(-14px) rotate(-10deg)} 75%{transform:translateX(14px) rotate(10deg)} 87%{transform:translateY(-12px) rotate(360deg)} 100%{transform:translateY(0) rotate(360deg)} }
+  @keyframes spin { 0%{transform:scale(1) rotate(0)} 50%{transform:scale(1.35) rotate(200deg) translateY(-20px)} 100%{transform:scale(1) rotate(360deg)} }
+  @keyframes float { from{opacity:1; transform:translateY(0)} to{opacity:0; transform:translateY(-90px) rotate(25deg)} }
+  .midkoala .hint { font-family:'Patrick Hand',cursive; font-size:17px; opacity:.6; min-height:22px; }
+  @keyframes sway { 0%,100%{transform:rotate(-8deg)} 50%{transform:rotate(8deg) translateY(-8px)} }
 </style>
 </head>
 <body>
@@ -63,6 +73,7 @@
     <input type="search" id="q" placeholder="Search her words…">
   </div>
   <div class="bday" id="bday"></div>
+  <div class="midkoala"><div class="k" id="midK">🐨</div><div class="hint" id="midHint">psst… koala has a secret 🤫</div></div>
   <p class="count" id="count"></p>
 </header>
 
@@ -73,6 +84,14 @@
   <div class="big" id="rWord"></div>
   <div class="meaning" id="rMeaning" style="font-family:'Patrick Hand',cursive;font-size:22px"></div>
   <p style="text-align:right"><button class="soft" id="again">Another 🎲</button> <button class="primary" onclick="randomDlg.close()">Close</button></p>
+</dialog>
+
+<dialog id="secretDlg" style="text-align:center">
+  <div style="font-size:60px">🎂🐨</div>
+  <h2 style="margin:6px 0">You found the koala's secret!</h2>
+  <div class="big" id="ageText" style="font-size:30px"></div>
+  <p style="font-family:'Patrick Hand',cursive;font-size:19px;opacity:.8">Shhh… don't tell anyone 🤫</p>
+  <p><button class="primary" onclick="secretDlg.close()">Close</button></p>
 </dialog>
 
 <dialog id="addDlg">
@@ -180,7 +199,7 @@ function rain(n){
 }
 koala.onclick = () => rain(20);
 
-// Birthday countdown (11 July, India time). Never shows age or year.
+// Birthday countdown (11 July, India time).
 const IST = 5.5 * 3600e3;
 function istNow(){ return new Date(Date.now() + IST); }
 function isBirthday(){ const d = istNow(); return d.getUTCMonth() === 6 && d.getUTCDate() === 11; }
@@ -209,6 +228,31 @@ function tickBday(){
     u(hours, hours === 1 ? 'hour' : 'hours') + u(mins, mins === 1 ? 'min' : 'mins') + u(secs, 'secs') + '</div>';
 }
 tickBday(); setInterval(tickBday, 1000);
+
+// Secret: tap the middle koala 27 times
+let taps = 0, tapTimer;
+const hints = ['', 'hehe 🐨', 'again!', 'keep going…', 'koala is giggling 😆', 'almost there… maybe 👀'];
+midK.onclick = () => {
+  taps++; clearTimeout(tapTimer); tapTimer = setTimeout(() => { taps = 0; midHint.textContent = 'psst… koala has a secret 🤫'; }, 4000);
+  midK.classList.add('pop'); midK.classList.remove('pop'); void midK.offsetWidth; midK.classList.add('pop'); setTimeout(() => midK.classList.remove('pop'), 500);
+  if (taps < 27) { midHint.textContent = hints[Math.min(Math.floor(taps / 5) + 1, hints.length - 1)]; return; }
+  taps = 0; midHint.textContent = 'psst… koala has a secret 🤫';
+  const now = istNow(); let y = now.getUTCFullYear() - 1999, m = now.getUTCMonth() - 6, d = now.getUTCDate() - 11;
+  if (d < 0) { m--; d += new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0)).getUTCDate(); }
+  if (m < 0) { y--; m += 12; }
+  ageText.textContent = `Suyosha is ${y} years, ${m} month${m === 1 ? '' : 's'} and ${d} day${d === 1 ? '' : 's'} old 💗`;
+  secretDlg.showModal(); rain(30);
+};
+
+function note(){
+  const n = document.createElement('div'); n.className = 'note';
+  n.textContent = ['🎵','🎶','💗','🌿'][Math.floor(Math.random()*4)];
+  const box = midK.parentElement, r = midK.getBoundingClientRect(), b = box.getBoundingClientRect();
+  n.style.left = (r.left - b.left + Math.random()*r.width) + 'px'; n.style.top = (r.top - b.top + 10) + 'px';
+  box.appendChild(n); setTimeout(() => n.remove(), 1700);
+}
+setInterval(note, 900);
+midK.addEventListener('click', () => { for (let i=0;i<3;i++) setTimeout(note, i*120); });
 
 load();
 </script>
