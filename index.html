@@ -60,6 +60,11 @@
   @keyframes float { from{opacity:1; transform:translateY(0)} to{opacity:0; transform:translateY(-90px) rotate(25deg)} }
   .midkoala .hint { font-family:'Patrick Hand',cursive; font-size:17px; opacity:.6; min-height:22px; }
   @keyframes sway { 0%,100%{transform:rotate(-8deg)} 50%{transform:rotate(8deg) translateY(-8px)} }
+  .hk { position:absolute; font-size:26px; cursor:pointer; user-select:none; z-index:5; -webkit-tap-highlight-color:transparent; transform:rotate(var(--r)); animation:peek 2.5s ease-in-out infinite; transition:transform .35s, opacity .35s; }
+  .hk.gone { transform:scale(2) rotate(180deg); opacity:0; animation:none; }
+  @keyframes peek { 0%,100%{ transform:rotate(var(--r)) translateY(0);} 50%{ transform:rotate(var(--r)) translateY(-5px);} }
+  .midkoala .k.ready { filter:drop-shadow(0 0 18px #ffb7c5); animation-duration:1.2s; }
+  body { position:relative; }
 </style>
 </head>
 <body>
@@ -73,7 +78,7 @@
     <input type="search" id="q" placeholder="Search her words…">
   </div>
   <div class="bday" id="bday"></div>
-  <div class="midkoala"><div class="k" id="midK">🐨</div><div class="hint" id="midHint">psst… koala has a secret 🤫</div></div>
+  <div class="midkoala"><div class="k" id="midK">🐨</div><div class="hint" id="midHint">find the 27 hidden koalas 👀 0/27</div></div>
   <p class="count" id="count"></p>
 </header>
 
@@ -88,7 +93,7 @@
 
 <dialog id="secretDlg" style="text-align:center">
   <div style="font-size:60px">🎂🐨</div>
-  <h2 style="margin:6px 0">You found the koala's secret!</h2>
+  <h2 style="margin:6px 0">You found all 27 koalas!</h2>
   <div class="big" id="ageText" style="font-size:30px"></div>
   <p style="font-family:'Patrick Hand',cursive;font-size:19px;opacity:.8">Shhh… don't tell anyone 🤫</p>
   <p><button class="primary" onclick="secretDlg.close()">Close</button></p>
@@ -229,14 +234,26 @@ function tickBday(){
 }
 tickBday(); setInterval(tickBday, 1000);
 
-// Secret: tap the middle koala 27 times
-let taps = 0, tapTimer;
-const hints = ['', 'hehe 🐨', 'again!', 'keep going…', 'koala is giggling 😆', 'almost there… maybe 👀'];
+// Secret: find 27 hidden koalas, then tap the middle koala
+const TOTAL = 27; let found = 0, allFound = false;
+const progress = () => midHint.textContent = allFound ? 'You found them all! Tap me 🎉' : `find the ${TOTAL} hidden koalas 👀 ${found}/${TOTAL}`;
+function hideKoalas(){
+  const H = Math.max(document.body.scrollHeight, innerHeight), W = document.documentElement.clientWidth;
+  for (let i = 0; i < TOTAL; i++) {
+    const k = document.createElement('div'); k.className = 'hk'; k.textContent = '🐨';
+    k.style.left = (10 + Math.random() * (W - 50)) + 'px';
+    k.style.top = (60 + (i / TOTAL) * (H - 140) + Math.random() * 40) + 'px';
+    k.style.animationDelay = (Math.random() * 2) + 's';
+    k.style.setProperty('--r', (Math.random() * 40 - 20) + 'deg');
+    k.onclick = e => { e.stopPropagation(); if (k.classList.contains('gone')) return; k.classList.add('gone'); setTimeout(() => k.remove(), 400);
+      found++; if (found >= TOTAL) { allFound = true; midK.classList.add('ready'); rain(20); } progress(); };
+    document.body.appendChild(k);
+  }
+  progress();
+}
 midK.onclick = () => {
-  taps++; clearTimeout(tapTimer); tapTimer = setTimeout(() => { taps = 0; midHint.textContent = 'psst… koala has a secret 🤫'; }, 4000);
-  midK.classList.add('pop'); midK.classList.remove('pop'); void midK.offsetWidth; midK.classList.add('pop'); setTimeout(() => midK.classList.remove('pop'), 500);
-  if (taps < 27) { midHint.textContent = hints[Math.min(Math.floor(taps / 5) + 1, hints.length - 1)]; return; }
-  taps = 0; midHint.textContent = 'psst… koala has a secret 🤫';
+  midK.classList.remove('pop'); void midK.offsetWidth; midK.classList.add('pop'); setTimeout(() => midK.classList.remove('pop'), 500);
+  if (!allFound) { progress(); return; }
   const now = istNow(); let y = now.getUTCFullYear() - 1999, m = now.getUTCMonth() - 6, d = now.getUTCDate() - 11;
   if (d < 0) { m--; d += new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0)).getUTCDate(); }
   if (m < 0) { y--; m += 12; }
@@ -254,7 +271,7 @@ function note(){
 setInterval(note, 900);
 midK.addEventListener('click', () => { for (let i=0;i<3;i++) setTimeout(note, i*120); });
 
-load();
+load().then(() => setTimeout(hideKoalas, 300));
 </script>
 </body>
 </html>
